@@ -11,6 +11,14 @@
 #nycshows .day-head h2 .dt{text-transform:none!important;letter-spacing:.02em!important}
 #nycshows a{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
 #nycshows img{max-width:100%}
+/* Squarespace wraps blocks in containers that break CSS sticky, so the date bar is pinned with a small script instead */
+#nycshows .day-head{position:static!important;padding-top:6px!important}
+#nycshows .day-head::after{display:none!important}
+#nycshows .wrap{padding-top:0!important}
+#nycshows .nyc-pin{position:fixed;top:0;z-index:60;display:none;background:var(--bg);pointer-events:none}
+#nycshows .nyc-pin .day-head{padding-top:30px!important;pointer-events:auto}
+@media (max-width:899px){#nycshows .nyc-pin .day-head{padding-top:12px!important}}
+#nycshows .nyc-pin::after{content:'';position:absolute;left:0;right:0;top:100%;height:12px;background:linear-gradient(var(--bg) 55%,rgba(249,247,240,0))}
 #nycshows{
   --bg:#F9F7F0; --ink:#1A1A17; --soft:#4A473F; --muted:#6B675C; --faint:#8A8678; --sig-muted:#8F8F8C;
   --rule:#D9D4C4; --rule-2:#E6E1D2; --red:#B3261E; --focus:#2F4A7A;
@@ -154,7 +162,7 @@
 #nycshows .sr-social{display:flex;gap:16px}
 #nycshows .sr-copy{margin:0;max-width:none;padding-top:14px;border-top:1px solid var(--rule);font-size:12px}
 
-#nycshows{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:16px;line-height:1.4;text-align:left}
+#nycshows{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:16px;line-height:1.4;text-align:left}
 </style>
 <div id="nycshows"><div class="wrap">
 
@@ -457,9 +465,33 @@ function __nycShows(D){
   render();
   setInterval(render, 60000);
 }
+
+function __nycPin(){
+  var root = document.getElementById('nycshows'); if (!root) return;
+  var pin = document.createElement('div'); pin.className = 'nyc-pin'; root.appendChild(pin);
+  var shown = null;
+  var update = function(){
+    var heads = [].slice.call(root.querySelectorAll('.days > section > .day-head'));
+    var cur = null, next = null;
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i].getBoundingClientRect().top <= 0) { cur = heads[i]; next = heads[i + 1] || null; }
+    }
+    if (!cur) { pin.style.display = 'none'; shown = null; return; }
+    var sec = cur.parentNode, box = sec.getBoundingClientRect();
+    if (box.bottom <= 0) { pin.style.display = 'none'; shown = null; return; }
+    if (shown !== cur) { pin.innerHTML = ''; pin.appendChild(cur.cloneNode(true)); shown = cur; }
+    pin.style.display = 'block'; pin.style.left = box.left + 'px'; pin.style.width = box.width + 'px';
+    var h = pin.offsetHeight, limit = Math.min(next ? next.getBoundingClientRect().top : Infinity, box.bottom);
+    pin.style.transform = limit < h ? 'translateY(' + (limit - h) + 'px)' : 'none';
+  };
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  setInterval(function(){ shown = null; update(); }, 60000);
+  update();
+}
 fetch('https://smallrevisionsrss.github.io/shows-data/shows.json?v=' + Math.floor(Date.now() / 300000), { cache: 'no-store' })
   .then(function(r){ return r.json(); })
-  .then(__nycShows)
+  .then(function(D){ __nycShows(D); __nycPin(); })
   .catch(function(){ var d = document.getElementById('days'); if (d) d.textContent = 'Listings could not be loaded. Please refresh.'; });
 </script>
 </body></html>
