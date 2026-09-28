@@ -478,7 +478,7 @@ function __nycPin(){
   var shown = null;
   // Height of the site's own fixed/sticky header (Squarespace header + announcement bar), so the bar locks under it.
   var topOffset = function(){
-    var off = 0, els = document.querySelectorAll('#header, header, .header, .header-announcement-bar-wrapper, .sqs-announcement-bar-dropzone, [data-nc-group="top"]');
+    var off = 0, els = document.querySelectorAll('#signal-mainnav-fixed, .signal-mainnav-fixed, #header, header, .header, .header-announcement-bar-wrapper, .sqs-announcement-bar-dropzone, [data-nc-group="top"]');
     for (var i = 0; i < els.length; i++) {
       var el = els[i]; if (root.contains(el) || pin.contains(el)) continue;
       var st = getComputedStyle(el); if (st.display === 'none' || st.visibility === 'hidden') continue;
@@ -486,6 +486,18 @@ function __nycPin(){
       for (var a = el.parentElement; !fixedish && a && a !== document.body; a = a.parentElement) { var ps = getComputedStyle(a).position; if (ps === 'fixed' || ps === 'sticky') fixedish = true; }
       if (!fixedish) continue;
       var r = el.getBoundingClientRect(); if (r.top <= 1 && r.bottom > off && r.bottom < window.innerHeight / 2) off = r.bottom;
+    }
+    // Fallback: whatever fixed/sticky element covers the top of the screen.
+    for (var y = 1, guard = 0; guard < 4; guard++) {
+      var hit = document.elementsFromPoint ? document.elementsFromPoint(window.innerWidth / 2, y) : [], grew = false;
+      for (var j = 0; j < hit.length; j++) {
+        for (var e2 = hit[j]; e2 && e2 !== document.body && e2 !== document.documentElement; e2 = e2.parentElement) {
+          if (e2 === pin || root.contains(e2)) break;
+          var p2 = getComputedStyle(e2).position;
+          if (p2 === 'fixed' || p2 === 'sticky') { var b2 = e2.getBoundingClientRect().bottom; if (b2 > off && b2 < window.innerHeight / 2) { off = b2; grew = true; } break; }
+        }
+      }
+      if (!grew) break; y = off + 1;
     }
     return Math.round(off);
   };
