@@ -15,7 +15,7 @@
 #nycshows .day-head{position:static!important;padding-top:6px!important}
 #nycshows .day-head::after{display:none!important}
 #nycshows .wrap{padding-top:0!important}
-#nycshows-pin{position:fixed;top:0;z-index:60;display:none;background:var(--bg);pointer-events:none}
+#nycshows-pin{position:fixed;top:0;z-index:9;display:none;background:var(--bg);pointer-events:none}
 #nycshows-pin .day-head{padding-top:30px!important;pointer-events:auto}
 @media (max-width:899px){#nycshows-pin .day-head{padding-top:12px!important}}
 #nycshows-pin::after{content:'';position:absolute;left:0;right:0;top:100%;height:12px;background:linear-gradient(var(--bg) 55%,rgba(249,247,240,0))}
@@ -476,19 +476,33 @@ function __nycPin(){
   var pin = document.getElementById('nycshows-pin');
   if (!pin) { pin = document.createElement('div'); pin.id = 'nycshows-pin'; document.body.appendChild(pin); }
   var shown = null;
+  // Height of the site's own fixed/sticky header (Squarespace header + announcement bar), so the bar locks under it.
+  var topOffset = function(){
+    var off = 0, els = document.querySelectorAll('#header, header, .header, .header-announcement-bar-wrapper, .sqs-announcement-bar-dropzone, [data-nc-group="top"]');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i]; if (root.contains(el) || pin.contains(el)) continue;
+      var st = getComputedStyle(el); if (st.display === 'none' || st.visibility === 'hidden') continue;
+      var fixedish = st.position === 'fixed' || st.position === 'sticky';
+      for (var a = el.parentElement; !fixedish && a && a !== document.body; a = a.parentElement) { var ps = getComputedStyle(a).position; if (ps === 'fixed' || ps === 'sticky') fixedish = true; }
+      if (!fixedish) continue;
+      var r = el.getBoundingClientRect(); if (r.top <= 1 && r.bottom > off && r.bottom < window.innerHeight / 2) off = r.bottom;
+    }
+    return Math.round(off);
+  };
   var update = function(){
+    var off = topOffset();
     var heads = [].slice.call(root.querySelectorAll('.days > section > .day-head'));
     var cur = null, next = null;
     for (var i = 0; i < heads.length; i++) {
-      if (heads[i].getBoundingClientRect().top <= 0) { cur = heads[i]; next = heads[i + 1] || null; }
+      if (heads[i].getBoundingClientRect().top <= off) { cur = heads[i]; next = heads[i + 1] || null; }
     }
     if (!cur) { pin.style.display = 'none'; shown = null; return; }
     var sec = cur.parentNode, box = sec.getBoundingClientRect();
-    if (box.bottom <= 0) { pin.style.display = 'none'; shown = null; return; }
+    if (box.bottom <= off) { pin.style.display = 'none'; shown = null; return; }
     if (shown !== cur) { pin.innerHTML = ''; pin.appendChild(cur.cloneNode(true)); shown = cur; }
-    pin.style.display = 'block'; pin.style.left = box.left + 'px'; pin.style.width = box.width + 'px';
+    pin.style.display = 'block'; pin.style.top = off + 'px'; pin.style.left = box.left + 'px'; pin.style.width = box.width + 'px';
     var h = pin.offsetHeight, limit = Math.min(next ? next.getBoundingClientRect().top : Infinity, box.bottom);
-    pin.style.transform = limit < h ? 'translateY(' + (limit - h) + 'px)' : 'none';
+    pin.style.transform = limit - off < h ? 'translateY(' + (limit - off - h) + 'px)' : 'none';
   };
   window.addEventListener('scroll', update, { passive: true });
   document.addEventListener('scroll', update, { passive: true, capture: true });
