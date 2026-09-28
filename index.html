@@ -4,6 +4,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Sans:wght@400;500;700&family=Instrument+Serif&display=swap">
 <style>
+/* guard against the Squarespace template's heading, paragraph and link styles */
+#nycshows h1,#nycshows h2,#nycshows h3,#nycshows h4,#nycshows p,#nycshows span,#nycshows a,#nycshows b,#nycshows button,#nycshows select,#nycshows label,#nycshows figure,#nycshows figcaption{font-family:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0;padding:0;background-image:none}
+#nycshows .show h3,#nycshows .intro h1{font-family:var(--serif)!important}
+#nycshows .day-head h2{font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif!important;text-transform:uppercase!important;letter-spacing:.16em!important}
+#nycshows .day-head h2 .dt{text-transform:none!important;letter-spacing:.02em!important}
+#nycshows a{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+#nycshows img{max-width:100%}
 #nycshows{
   --bg:#F9F7F0; --ink:#1A1A17; --soft:#4A473F; --muted:#6B675C; --faint:#8A8678; --sig-muted:#8F8F8C;
   --rule:#D9D4C4; --rule-2:#E6E1D2; --red:#B3261E; --focus:#2F4A7A;
@@ -17,8 +24,12 @@
 #nycshows a{color:var(--ink)}
 #nycshows a:hover{color:var(--muted)}
 #nycshows :focus-visible{outline:2px solid var(--focus);outline-offset:3px}
-#nycshows .wrap{max-width:1280px;margin:0 auto;padding-inline:20px;padding-block:18px 48px;display:flex;flex-direction:column;gap:24px}
-@media (min-width:900px){#nycshows .wrap{padding-inline:56px;padding-block:28px 64px;gap:28px}
+#nycshows .wrap{max-width:1440px;margin:0 auto;padding-inline:24px;padding-block:18px 48px;display:flex;flex-direction:column;gap:24px}
+@media (min-width:900px){#nycshows .wrap{padding-block:28px 64px;gap:28px}
+}
+@media (min-width:1024px){#nycshows .wrap{padding-inline:48px}
+}
+@media (max-width:520px){#nycshows .wrap{padding-inline:18px}
 }
 #nycshows .top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--ink)}
 #nycshows .brand{font-size:19px;font-weight:500;letter-spacing:-.01em}
@@ -47,9 +58,7 @@
 @media (min-width:900px){#nycshows .days{gap:48px}
 }
 #nycshows .grid{display:grid;grid-template-columns:minmax(0,1fr)}
-@media (min-width:900px){#nycshows .grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:32px}
-}
-@media (min-width:1100px){#nycshows .grid{column-gap:40px}
+@media (min-width:900px){#nycshows .grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:64px}
 }
 #nycshows .day-head{border-bottom:1px solid var(--rule)}
 #nycshows .day-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-block:10px 8px}
@@ -87,18 +96,14 @@
 #nycshows .pick figcaption{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
 #nycshows .picks{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding-bottom:4px}
 #nycshows .picks .pick{border-top:0;padding-top:14px}
-@media (min-width:900px){#nycshows .picks{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:32px;padding-bottom:18px}
+@media (min-width:900px){#nycshows .picks{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:64px;padding-bottom:18px}
 #nycshows .picks .pick{padding-top:16px}
 
 }
-@media (min-width:1100px){#nycshows .picks{column-gap:40px}
-}
-@media (min-width:900px){#nycshows .picks, #nycshows .grid{--g:32px;background:
+@media (min-width:900px){#nycshows .picks, #nycshows .grid{--g:64px;background:
     linear-gradient(var(--rule),var(--rule)) calc((100% - 2*var(--g))/3 + var(--g)/2) 0/1px 100% no-repeat,
     linear-gradient(var(--rule),var(--rule)) calc(2*(100% - 2*var(--g))/3 + 1.5*var(--g)) 0/1px 100% no-repeat}
 
-}
-@media (min-width:1100px){#nycshows .picks, #nycshows .grid{--g:40px}
 }
 @media (min-width:900px){#nycshows .day-head + .picks, #nycshows .day-head + .grid{background-position-y:16px;background-size:1px calc(100% - 16px)}
 
@@ -149,7 +154,7 @@
 #nycshows .sr-social{display:flex;gap:16px}
 #nycshows .sr-copy{margin:0;max-width:none;padding-top:14px;border-top:1px solid var(--rule);font-size:12px}
 
-#nycshows{background:var(--bg);color:var(--ink)}
+#nycshows{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:16px;line-height:1.4;text-align:left}
 </style>
 <div id="nycshows"><div class="wrap">
 
