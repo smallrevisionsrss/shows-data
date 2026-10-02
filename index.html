@@ -102,6 +102,11 @@
 :is(#nycshows,#nycshows-pin) .pick figure{margin:0;display:flex;flex-direction:column;gap:6px}
 :is(#nycshows,#nycshows-pin) .pick img{display:block;box-sizing:border-box;width:100%;height:auto;max-width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--rule-2);border:1px solid #DEDCD6;filter:saturate(.92)}
 :is(#nycshows,#nycshows-pin) .pick figcaption{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+:is(#nycshows,#nycshows-pin) .pick .photo-link{display:block;cursor:pointer}
+:is(#nycshows,#nycshows-pin) .pick .photo-link:hover img, :is(#nycshows,#nycshows-pin) .pick .photo-link:focus-visible img{filter:saturate(1)}
+:is(#nycshows,#nycshows-pin) .pick .photo-link:focus-visible{outline:2px solid var(--ink,#111);outline-offset:2px}
+:is(#nycshows,#nycshows-pin) .pick .credit-link{color:inherit;text-decoration:none}
+:is(#nycshows,#nycshows-pin) .pick .credit-link:hover{text-decoration:underline;text-underline-offset:2px}
 :is(#nycshows,#nycshows-pin) .picks{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding-bottom:4px}
 :is(#nycshows,#nycshows-pin) .picks .pick{border-top:0;padding-top:14px}
 @media (min-width:900px){:is(#nycshows,#nycshows-pin) .picks{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:64px;padding-bottom:18px}
@@ -170,7 +175,7 @@
 
   <div class="intro">
     <h1>Shows</h1>
-    <p class="deck">A running record of nights out in New York <span>/ September 29 – October 12, 2026</span></p>
+    <p class="deck">A running record of nights out in New York <span>/ October 2 – November 26, 2026</span></p>
   </div>
 
   <div class="filters" id="calendar">
@@ -188,7 +193,7 @@
 
   <div class="sr-notes" id="about">
     <p>Listings come from each venue’s own calendar, with Oh My Rockness and Brooklyn Vegan filling gaps where a venue’s site doesn’t list something. Shows stay listed until 6 AM the morning after. Set times appear when venues post them. “Age TBA” means the venue hasn’t listed one.</p>
-    <p>Updated September 29, 2026 · <a href="#subscribe">Subscribe to the daily list</a></p>
+    <p>Updated October 2, 2026 · <a href="#subscribe">Subscribe to the daily list</a></p>
   </div>
 </div></div>
 <script>
@@ -207,8 +212,24 @@ function __nycShows(D){
   function mins(t){ var m = /(\d{1,2}):(\d{2}) ?([AP])M/.exec(t || ''); if (!m) return 9999; var h = (+m[1]) % 12 + (m[3] === 'P' ? 12 : 0); if (h < 6) h += 24; return h * 60 + (+m[2]); }
   function hoodOf(r){ return VENUES[r[0]][1]; }
   // A show stays listed until 6:00 AM New York time the morning after its date.
+  function photoFig(p){
+    var fig = el('figure'), im = el('img');
+    im.src = p.img; im.alt = p.alt; im.loading = 'lazy'; im.width = 1200; im.height = 675;
+    var cap = el('figcaption', null, 'Photo: ' + p.credit);
+    if (p.url) {
+      var a = el('a', 'photo-link'); a.href = p.url; a.target = '_blank'; a.rel = 'noopener';
+      a.setAttribute('aria-label', p.credit + ' (opens in a new window)'); a.appendChild(im);
+      var ca = el('a', 'credit-link', 'Photo: ' + p.credit); ca.href = p.url; ca.target = '_blank'; ca.rel = 'noopener';
+      cap = el('figcaption'); cap.appendChild(ca);
+      fig.append(a, cap);
+    } else fig.append(im, cap);
+    return fig;
+  }
   function startsAt(r){
-    return Date.parse('2026-' + r[1] + 'T00:00:00-04:00') + 30 * 3600000;
+    var d = new Date(Date.UTC(2026, +r[1].slice(0,2) - 1, +r[1].slice(3) + 1));
+    var md = ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2);
+    var est = d.getUTCFullYear() > 2026 || md >= '11-01';
+    return Date.parse(d.getUTCFullYear() + '-' + md + 'T06:00:00' + (est ? '-05:00' : '-04:00'));
   }
   function upcoming(){ var now = Date.now(); return SHOWS.filter(function(r){ return startsAt(r) > now; }); }
   function nyDay(offset){ var d = new Date(Date.now() - 6 * 3600000 + offset * 86400000); return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit' }).format(d); }
@@ -245,7 +266,7 @@ function __nycShows(D){
     hb.addEventListener('click', function(){ set(v[1], 'all'); });
     var slash = el('span', null, '/'); slash.setAttribute('aria-hidden','true');
     var slash2 = el('span', null, '/'); slash2.setAttribute('aria-hidden','true');
-    var city = v[1] === 'hv' ? '' : ({rw:1,ms:1,fh:1}[v[1]] ? ', Queens, NY' : {les:1,ev:1,gv:1,us:1,ch:1,mt:1,sp:1}[v[1]] ? ', New York, NY' : ', Brooklyn, NY');
+    var city = v[1] === 'hv' ? '' : ({rw:1,ms:1,fh:1,fm:1}[v[1]] ? ', Queens, NY' : {hk:1,uw:1,hl:1,les:1,ev:1,gv:1,us:1,ch:1,mt:1,sp:1}[v[1]] ? ', New York, NY' : ', Brooklyn, NY');
     var mp = el('a', 'map', 'Map'); mp.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v[0] + ', ' + v[2] + city);
     mp.target = '_blank'; mp.rel = 'noopener'; mp.setAttribute('aria-label', 'Map: ' + v[0]);
     where.append(vb, slash, hb, slash2, mp);
@@ -293,8 +314,7 @@ function __nycShows(D){
       });
       var boxes = chosen.map(function(c){
         var pk = c[0], box = el('div','pick');
-        var fig = el('figure'); var im = el('img'); im.src = pk.img; im.alt = pk.alt; im.loading = 'lazy'; im.width = 1200; im.height = 675;
-        fig.append(im, el('figcaption', null, 'Photo: ' + pk.credit));
+        var fig = photoFig(pk);
         box.append(fig, card(c[1]));
         return box;
       });
@@ -345,8 +365,7 @@ function __nycShows(D){
       var mkPhoto = function(r){
         var f = FEED[r[0] + '|' + r[1] + '|' + r[2]];
         var box = el('div','pick inline feedpic');
-        var fig = el('figure'); var im = el('img'); im.src = f.img; im.alt = f.alt; im.loading = 'lazy'; im.width = 1200; im.height = 675;
-        fig.append(im, el('figcaption', null, 'Photo: ' + f.credit));
+        var fig = photoFig(f);
         box.append(fig, card(r)); return box;
       };
       if (wide) {
