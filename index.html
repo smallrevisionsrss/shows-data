@@ -6,7 +6,7 @@
 <style>
 /* guard against the Squarespace template's heading, paragraph and link styles */
 :is(#nycshows,#nycshows-pin) :is(h1,h2,h3,h4,p,span,a,b,button,select,label,figure,figcaption){font-family:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0;padding:0;background-image:none}
-#nycshows .show h3,#nycshows .intro h1{font-family:var(--serif)!important}
+#nycshows .show h3,#nycshows .show .with,#nycshows .intro h1{font-family:var(--serif)!important}
 #nycshows .day-head h2,#nycshows-pin .day-head h2{font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif!important;text-transform:uppercase!important;letter-spacing:.16em!important}
 #nycshows .day-head h2 .dt,#nycshows-pin .day-head h2 .dt{text-transform:none!important;letter-spacing:.02em!important}
 #nycshows a{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
@@ -89,7 +89,7 @@
 :is(#nycshows,#nycshows-pin) .where a.map:hover{color:var(--ink);text-decoration-color:var(--ink)}
 :is(#nycshows,#nycshows-pin) .show h3{margin:0;font-size:23px;font-weight:500;line-height:1.125;letter-spacing:-.012em;text-wrap:balance;overflow-wrap:anywhere}
 :is(#nycshows,#nycshows-pin) .show.dead h3{color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px}
-:is(#nycshows,#nycshows-pin) .with{font-style:normal;font-size:17px;line-height:1.3;color:var(--soft)}
+:is(#nycshows,#nycshows-pin) .with{font-family:var(--serif);font-style:normal;font-size:17px;font-weight:500;line-height:1.3;color:var(--soft)}
 :is(#nycshows,#nycshows-pin) .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 :is(#nycshows,#nycshows-pin) .age{font-family:var(--mono);font-size:12px;color:var(--ink)}
 :is(#nycshows,#nycshows-pin) .age.tba{color:var(--faint)}
