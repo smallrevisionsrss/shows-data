@@ -266,7 +266,7 @@ function __nycShows(D){
     hb.addEventListener('click', function(){ set(v[1], 'all'); });
     var slash = el('span', null, '/'); slash.setAttribute('aria-hidden','true');
     var slash2 = el('span', null, '/'); slash2.setAttribute('aria-hidden','true');
-    var city = v[1] === 'hv' ? '' : ({rw:1,ms:1,fh:1,fm:1}[v[1]] ? ', Queens, NY' : {hk:1,uw:1,hl:1,les:1,ev:1,gv:1,us:1,ch:1,mt:1,sp:1}[v[1]] ? ', New York, NY' : ', Brooklyn, NY');
+    var city = v[1] === 'hv' ? '' : ({rw:1,ms:1,fh:1,fm:1}[v[1]] ? ', Queens, NY' : {hs:1,mh:1,hk:1,uw:1,hl:1,les:1,ev:1,gv:1,us:1,ch:1,mt:1,sp:1}[v[1]] ? ', New York, NY' : ', Brooklyn, NY');
     var mp = el('a', 'map', 'Map'); mp.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v[0] + ', ' + v[2] + city);
     mp.target = '_blank'; mp.rel = 'noopener'; mp.setAttribute('aria-label', 'Map: ' + v[0]);
     where.append(vb, slash, hb, slash2, mp);
