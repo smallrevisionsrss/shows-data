@@ -328,6 +328,18 @@ function __nycShows(D){
         rows.forEach(function(r){ seq.push({ r: r }); });
       } else {
         // Single column: the first pick leads the day, the rest are spread evenly through its listings.
+        // Shows that start at the same time can go in any order: interleave the ones with photos
+        // so photo listings are not stuck next to each other.
+        var hasF = function(r){ return !!FEED[r[0] + '|' + r[1] + '|' + r[2]] && r[5] !== 'cancel' && r[5] !== 'post'; };
+        var re = [], gi = 0;
+        while (gi < rows.length) {
+          var gj = gi; while (gj < rows.length && mins(rows[gj][4] || rows[gj][8]) === mins(rows[gi][4] || rows[gi][8])) gj++;
+          var gp = rows.slice(gi, gj).filter(hasF), gn = rows.slice(gi, gj).filter(function(r){ return !hasF(r); });
+          if (re.length && hasF(re[re.length - 1]) && gn.length) re.push(gn.shift());
+          while (gp.length || gn.length) { if (gp.length) re.push(gp.shift()); if (gn.length) re.push(gn.shift()); if (!gp.length) { re = re.concat(gn); gn = []; } }
+          gi = gj;
+        }
+        rows = re;
         var n = boxes.length, R = rows.length, slots = {};
         boxes.forEach(function(x, k){ var at = k === 0 ? 0 : Math.round(k * R / n); (slots[at] = slots[at] || []).push(x); });
         for (var i = 0; i <= R; i++) {
@@ -361,6 +373,9 @@ function __nycShows(D){
           cands.forEach(function(i){ if (!imgAt[i] && !touching(i) && (best === null || Math.abs(i - tg) < Math.abs(best - tg))) best = i; });
           if (best !== null) { imgAt[best] = true; useAt[best] = true; }
         });
+        // Fill any gaps left where two targets wanted the same listing.
+        var placedN = Object.keys(useAt).length;
+        cands.forEach(function(i){ if (placedN < cap && !imgAt[i] && !touching(i)) { imgAt[i] = true; useAt[i] = true; placedN++; } });
       }
       var mkPhoto = function(r){
         var f = FEED[r[0] + '|' + r[1] + '|' + r[2]];
@@ -463,7 +478,7 @@ function __nycShows(D){
             }
             return cnt[0] === k && cnt[1] === k && cnt[2] === k ? { order: order, pos: pos, photo: set, placed: placed } : null;
           };
-          var kMax = Math.max(1, Math.min(4, Math.round(R.length / 16)));
+          var kMax = Math.max(2, Math.min(4, Math.round(R.length / 14)));
           for (var k = kMax; k >= 1; k--) {
             var bestCost = Infinity, best = null, rowsN = Math.ceil((R.length + 6 * k) / 3);
             for (var trial = 0; trial < 600; trial++) {
@@ -473,7 +488,7 @@ function __nycShows(D){
                 if (trial) for (var x = arr.length - 1; x > 0; x--) { var y = Math.floor(rnd() * (x + 1)), tmp = arr[x]; arr[x] = arr[y]; arr[y] = tmp; }
                 order = order.concat(arr);
               });
-              var res = tryLayout(order, k, trial ? 0.35 * rnd() : 0);
+              var res = tryLayout(order, k, trial ? 0.5 * rnd() : 0);
               if (!res) continue;
               // Spread: each column's photos sit near evenly spaced targets down the day.
               var cost = 0;
