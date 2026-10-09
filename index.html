@@ -175,7 +175,7 @@
 
   <div class="intro">
     <h1>Shows</h1>
-    <p class="deck">A running record of nights out in New York <span>/ October 5 – November 26, 2026</span></p>
+    <p class="deck">A running record of nights out in New York <span>/ October 9 – December 3, 2026</span></p>
   </div>
 
   <div class="filters" id="calendar">
@@ -193,7 +193,7 @@
 
   <div class="sr-notes" id="about">
     <p>Listings come from each venue’s own calendar, with Oh My Rockness and Brooklyn Vegan filling gaps where a venue’s site doesn’t list something. Shows stay listed until 6 AM the morning after. Set times appear when venues post them. “Age TBA” means the venue hasn’t listed one.</p>
-    <p>Updated October 5, 2026 · <a href="#subscribe">Subscribe to the daily list</a></p>
+    <p>Updated October 9, 2026 · <a href="#subscribe">Subscribe to the daily list</a></p>
   </div>
 </div></div>
 <script>
@@ -335,12 +335,12 @@ function __nycShows(D){
           if (i < R) seq.push({ r: rows[i] });
         }
       }
-      // Photos through the listings: at most one in six, never next to another photo
+      // Photos through the listings: at most one in three, never next to another photo
       // (no side-by-side or stacked photos on the three-column grid, none touching a pick).
       var wide = WIDE.matches, imgAt = {}, useAt = {}, start = wide ? 3 : 1;
-      var rowCount = seq.filter(function(it){ return it.r; }).length, cap = Math.ceil(rowCount / 6);
+      var rowCount = seq.filter(function(it){ return it.r; }).length, cap = Math.ceil(rowCount / 3);
       seq.forEach(function(it, i){ if (it.node) imgAt[i] = true; });
-      // Pass 1: choose which listings get a photo (at most one in six, never touching another photo).
+      // Pass 1: choose which listings get a photo (at most one in three, never touching another photo).
       var cands = [];
       seq.forEach(function(it, i){
         if (!it.r || i < start || it.r[5] === 'cancel' || it.r[5] === 'post') return;
@@ -441,20 +441,49 @@ function __nycShows(D){
         if (!L) {
           var natural = R.map(function(_, i){ return i; });
           L = { order: natural, pos: simulate(natural, {}), photo: {} };
-          var bestCost = Infinity, rowsN = Math.ceil((R.length + 6) / 3);
-          var targets = [rowsN / 6, rowsN / 2, 5 * rowsN / 6];
-          var cl = cands.slice(0, 14);
-          for (var a1 = 0; a1 < cl.length; a1++) for (var a2 = a1 + 1; a2 < cl.length; a2++) for (var a3 = a2 + 1; a3 < cl.length; a3++) {
-            var S = [cl[a1], cl[a2], cl[a3]];
-            var sizes = S.map(function(i){ return T.filter(function(x){ return x === T[i]; }).length; });
-            for (var c1 = 0; c1 < sizes[0]; c1++) for (var c2 = 0; c2 < sizes[1]; c2++) for (var c3 = 0; c3 < sizes[2]; c3++) {
-              var order = buildOrder(S, [c1, c2, c3]), set = {}; S.forEach(function(i){ set[i] = true; });
-              var pos = simulate(order, set);
-              if (!good(pos, S)) continue;
-              var rs = S.map(function(i){ return pos[i][0]; }).sort(function(x, y){ return x - y; });
-              var cost = Math.abs(rs[0] - targets[0]) + Math.abs(rs[1] - targets[1]) + Math.abs(rs[2] - targets[2]);
-              if (cost < bestCost) { bestCost = cost; L = { order: order, pos: pos, photo: set }; }
+          // Photos per column scale with the day's listings (about one photo listing for every
+          // sixteen listings in each column's share), stepping down until every column can take the same number.
+          var seed = 0; for (var q0 = 0; q0 < sig.length; q0++) seed = (seed * 31 + sig.charCodeAt(q0)) >>> 0;
+          var rnd = function(){ seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+          var groups = {}; R.forEach(function(_, i){ (groups[T[i]] = groups[T[i]] || []).push(i); });
+          var gkeys = Object.keys(groups).map(Number).sort(function(x, y){ return x - y; });
+          var tryLayout = function(order, k, skipP){
+            var occ = {}, pos = {}, set = {}, cnt = [0, 0, 0], placed = [], cur = 0, n = 0;
+            for (var q = 0; q < order.length; q++) {
+              var i = order[q];
+              while (occ[cur]) cur++;
+              var r = Math.floor(cur / 3), c = cur % 3, span = 1;
+              if (isCand[i] && n < 3 * k && r >= 1 && cnt[c] < k && !(skipP && rnd() < skipP)) {
+                var free = !occ[(r + 1) * 3 + c] && !occ[(r + 2) * 3 + c];
+                var ok = free && placed.every(function(P){ var dc = Math.abs(P[1] - c), dr = Math.abs(P[0] - r); return !((dc === 0 && dr < 4) || (dc === 1 && dr < 3)); });
+                if (ok) { span = 3; set[i] = true; cnt[c]++; n++; placed.push([r, c]); }
+              }
+              for (var s = 0; s < span; s++) occ[(r + s) * 3 + c] = true;
+              pos[i] = [r, c, span];
             }
+            return cnt[0] === k && cnt[1] === k && cnt[2] === k ? { order: order, pos: pos, photo: set, placed: placed } : null;
+          };
+          var kMax = Math.max(1, Math.min(4, Math.round(R.length / 16)));
+          for (var k = kMax; k >= 1; k--) {
+            var bestCost = Infinity, best = null, rowsN = Math.ceil((R.length + 6 * k) / 3);
+            for (var trial = 0; trial < 600; trial++) {
+              var order = [];
+              gkeys.forEach(function(g){
+                var arr = groups[g].slice();
+                if (trial) for (var x = arr.length - 1; x > 0; x--) { var y = Math.floor(rnd() * (x + 1)), tmp = arr[x]; arr[x] = arr[y]; arr[y] = tmp; }
+                order = order.concat(arr);
+              });
+              var res = tryLayout(order, k, trial ? 0.35 * rnd() : 0);
+              if (!res) continue;
+              // Spread: each column's photos sit near evenly spaced targets down the day.
+              var cost = 0;
+              for (var c0 = 0; c0 < 3; c0++) {
+                var rs = res.placed.filter(function(P){ return P[1] === c0; }).map(function(P){ return P[0]; }).sort(function(x, y){ return x - y; });
+                rs.forEach(function(rr, j){ cost += Math.abs(rr - (j + 0.5 + c0 / 3 - 1 / 3) * rowsN / k); });
+              }
+              if (cost < bestCost) { bestCost = cost; best = res; }
+            }
+            if (best) { L = best; break; }
           }
           cache[sig] = L;
         }
