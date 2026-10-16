@@ -96,6 +96,8 @@
 :is(#nycshows,#nycshows-pin) .meta a{text-underline-offset:3px}
 :is(#nycshows,#nycshows-pin) .sold{color:var(--red);font-weight:600;letter-spacing:.06em}
 :is(#nycshows,#nycshows-pin) .off{color:var(--red);font-weight:600;letter-spacing:.06em}
+:is(#nycshows,#nycshows-pin) .filter-tag b{color:var(--ink)}
+:is(#nycshows,#nycshows-pin) .filter-tag button{padding:0;border:0;background:none;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
 :is(#nycshows,#nycshows-pin) .empty{grid-column:1/-1;padding-block:24px;border-top:1.5px solid var(--ink);font-style:italic;font-size:19px;color:var(--muted)}
 :is(#nycshows,#nycshows-pin) .pick{display:flex;flex-direction:column;gap:6px;padding-block:14px 0;border-top:1px solid var(--rule)}
 :is(#nycshows,#nycshows-pin) .pick .show{border-top:0;padding-top:8px}
@@ -135,6 +137,7 @@
 @media (max-width:899px){:is(#nycshows,#nycshows-pin) .day-head{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:12px 10px}
 :is(#nycshows,#nycshows-pin) .tag-row{display:none!important;padding-top:8px;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:500;letter-spacing:.02em;color:var(--sig-muted)}
 :is(#nycshows,#nycshows-pin) .tag-row b{font-weight:500;color:var(--ink)}
+:is(#nycshows,#nycshows-pin) .tag-row.filter-tag{display:block!important}
 
 }
 :is(#nycshows,#nycshows-pin) .sr-notes{display:flex;flex-direction:column;gap:6px;padding-top:16px;border-top:1px solid var(--ink);font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--muted)}
@@ -206,7 +209,10 @@ function __nycShows(D){
   var DAYS = D.days;
   var HOOD_NAME = {}; HOODS.forEach(function(h){ HOOD_NAME[h[0]] = h[1]; });
   var state = { hood:'all', venue:'all' };
-  try { var saved = JSON.parse(localStorage.getItem('nyc-shows-filter') || 'null'); if (saved && saved.hood && saved.venue) state = saved; } catch(e) {}
+  // Every visit opens on the full calendar. A filter lasts only while the visitor stays in this tab,
+  // and the old saved filter (which could leave a returning visitor stuck on one venue) is cleared.
+  try { localStorage.removeItem('nyc-shows-filter'); } catch(e) {}
+  try { var saved = JSON.parse(sessionStorage.getItem('nyc-shows-filter-v2') || 'null'); if (saved && saved.hood && saved.venue) state = saved; } catch(e) {}
 
   function el(tag, cls, text){ var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function mins(t){ var m = /(\d{1,2}):(\d{2}) ?([AP])M/.exec(t || ''); if (!m) return 9999; var h = (+m[1]) % 12 + (m[3] === 'P' ? 12 : 0); if (h < 6) h += 24; return h * 60 + (+m[2]); }
@@ -250,9 +256,10 @@ function __nycShows(D){
   sel.addEventListener('change', function(){ set('all', sel.value); });
   document.getElementById('clear').addEventListener('click', function(){ set('all','all'); });
 
+  document.addEventListener('click', function(e){ var t = e.target.closest && e.target.closest('[data-nyc-showall]'); if (t) { e.preventDefault(); set('all', 'all'); } });
   function set(h, v){
     state = { hood:h, venue:v };
-    try { localStorage.setItem('nyc-shows-filter', JSON.stringify(state)); } catch(e) {}
+    try { sessionStorage.setItem('nyc-shows-filter-v2', JSON.stringify(state)); } catch(e) {}
     render();
   }
 
@@ -293,6 +300,8 @@ function __nycShows(D){
     chips.forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.hood === state.hood && state.venue === 'all')); b.querySelector('.n').textContent = String(counts[b.dataset.hood] || 0); });
     sel.value = state.venue;
     var days = document.getElementById('days'); days.textContent = '';
+    // When a filter is on, every day's header says so (the pinned header copies it), with a way back to everything.
+    var fname = state.venue !== 'all' ? (VENUES[state.venue] || [state.venue])[0] : (state.hood !== 'all' ? (HOOD_NAME[state.hood] || state.hood) : '');
     var total = 0;
     DAYS.forEach(function(d){
       var rows = LIVE.filter(function(r){
@@ -304,6 +313,10 @@ function __nycShows(D){
       var head = el('div','day-head');
       var h2 = el('h2'); var dot = el('span','sig-dot'); dot.setAttribute('aria-hidden','true'); dot.style.animationDelay = -(Date.now() % 2200) + 'ms'; var dt = el('span','dt'); dt.append(el('span','sl',' / '), d[1].split(', ')[1] + ', 2026'); h2.append(dot, d[1].split(',')[0], dt);
       var tag = el('span','tag', 'A rolling calendar of musical events '); var tail = el('span','nw','/ '); tail.appendChild(el('b', null, 'New York City')); tag.appendChild(tail);
+      if (fname) {
+        tag = el('span','tag filter-tag'); tag.append('Showing only ', el('b', null, fname), ' / ');
+        var sa = el('button', null, 'Show all venues'); sa.type = 'button'; sa.setAttribute('data-nyc-showall', '1'); tag.appendChild(sa);
+      }
       // Phones: only the date line pins; the tagline sits just below it and scrolls away.
       if (WIDE.matches) { head.append(h2, tag); sec.appendChild(head); }
       else { head.appendChild(h2); tag.classList.add('tag-row'); sec.append(head, tag); }
