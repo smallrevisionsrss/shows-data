@@ -175,7 +175,7 @@
 
   <div class="intro">
     <h1>Shows</h1>
-    <p class="deck">A running record of nights out in New York <span>/ October 9 – December 3, 2026</span></p>
+    <p class="deck">A running record of nights out in New York <span>/ October 16 – December 10, 2026</span></p>
   </div>
 
   <div class="filters" id="calendar">
@@ -193,7 +193,7 @@
 
   <div class="sr-notes" id="about">
     <p>Listings come from each venue’s own calendar, with Oh My Rockness and Brooklyn Vegan filling gaps where a venue’s site doesn’t list something. Shows stay listed until 6 AM the morning after. Set times appear when venues post them. “Age TBA” means the venue hasn’t listed one.</p>
-    <p>Updated October 9, 2026 · <a href="#subscribe">Subscribe to the daily list</a></p>
+    <p>Updated October 16, 2026 · <a href="#subscribe">Subscribe to the daily list</a></p>
   </div>
 </div></div>
 <script>
@@ -585,9 +585,20 @@ function __nycPin(){
   setInterval(function(){ shown = null; update(); }, 60000);
   update();
 }
-fetch('https://smallrevisionsrss.github.io/shows-data/shows.json?v=' + Math.floor(Date.now() / 300000), { cache: 'no-store' })
-  .then(function(r){ return r.json(); })
-  .then(function(D){ __nycShows(D); __nycPin(); })
-  .catch(function(){ var d = document.getElementById('days'); if (d) d.textContent = 'Listings could not be loaded. Please refresh.'; });
+(function(){
+  // Primary: GitHub Pages. Backup: the same files straight from the GitHub repo, in case Pages is down.
+  var BASE = 'https://smallrevisionsrss.github.io/shows-data/', RAW = 'https://raw.githubusercontent.com/smallrevisionsrss/shows-data/main/';
+  var v = '?v=' + Math.floor(Date.now() / 300000);
+  function get(u){ return fetch(u + 'shows.json' + v, { cache: 'no-store' }).then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); }); }
+  function swap(D){
+    var fix = function(o){ if (o && o.img) o.img = o.img.replace(BASE, RAW); };
+    Object.keys(D.feed || {}).forEach(function(k){ fix(D.feed[k]); });
+    Object.keys(D.picks || {}).forEach(function(k){ (D.picks[k] || []).forEach(fix); });
+    return D;
+  }
+  get(BASE).catch(function(){ return get(RAW).then(swap); })
+    .then(function(D){ __nycShows(D); __nycPin(); })
+    .catch(function(){ var d = document.getElementById('days'); if (d) d.textContent = 'Listings could not be loaded. Please refresh.'; });
+})();
 </script>
 </body></html>
